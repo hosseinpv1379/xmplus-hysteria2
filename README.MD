@@ -9,18 +9,10 @@
 ## Quick Installation
 
 ```bash
-wget https://github.com/yourusername/vpn-service/releases/download/v1.0.0/vpn-service-v1.0.0.zip
-unzip vpn-service-v1.0.0.zip
-cd vpn-service
+git clone https://github.com/hosseinpv1379/xmplus-hysteria2.git
+
+cd xmplus-hysteria2
 sudo bash install.sh
-```
-
-## Manual Installation Steps
-
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/vpn-service.git
-cd vpn-service
 ```
 
 2. Edit `config.json`:
