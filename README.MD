@@ -72,10 +72,10 @@ sudo crontab -e
 2. خط‌های زیر را به کرون‌تب اضافه کنید:
 ```bash
 # همگام‌سازی کاربران هر 2 دقیقه
-*/2 * * * * /opt/sui-sync/venv/bin/python /opt/sui-sync/main.py
+*/2 * * * * /opt/sui-sync/venv/bin/python /opt/sui-sync/src/main.py
 
 # همگام‌سازی ترافیک هر 2 دقیقه
-*/2 * * * * /opt/sui-sync/venv/bin/python /opt/sui-sync/sync_usage.py
+*/2 * * * * /opt/sui-sync/venv/bin/python /opt/sui-sync/src/sync_usage.py
 ```
 
 3. برای اطمینان از ثبت کرون‌جاب‌ها:
