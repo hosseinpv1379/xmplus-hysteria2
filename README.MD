@@ -60,77 +60,46 @@ sudo nano /opt/sui-sync/config.json
 }
 ```
 
-## راه‌اندازی سرویس‌ها
+## راه‌اندازی با Crontab
 
-1. برای همگام‌سازی کاربران، سرویس زیر را ایجاد کنید:
+برای اجرای اسکریپت‌ها هر 2 دقیقه یک‌بار، از crontab استفاده می‌کنیم:
+
+1. کرون‌تب را برای کاربر root ویرایش کنید:
 ```bash
-sudo nano /etc/systemd/system/sui-sync.service
+sudo crontab -e
 ```
 
-محتوای فایل سرویس:
-```ini
-[Unit]
-Description=S-UI User Sync Service
-After=network.target
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/opt/sui-sync
-Environment=PYTHONPATH=/opt/sui-sync
-ExecStart=/opt/sui-sync/venv/bin/python /opt/sui-sync/main.py
-Restart=always
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-```
-
-2. برای همگام‌سازی ترافیک، سرویس دیگری ایجاد کنید:
+2. خط‌های زیر را به کرون‌تب اضافه کنید:
 ```bash
-sudo nano /etc/systemd/system/sui-sync-usage.service
+# همگام‌سازی کاربران هر 2 دقیقه
+*/2 * * * * /opt/sui-sync/venv/bin/python /opt/sui-sync/main.py
+
+# همگام‌سازی ترافیک هر 2 دقیقه
+*/2 * * * * /opt/sui-sync/venv/bin/python /opt/sui-sync/sync_usage.py
 ```
 
-محتوای فایل سرویس:
-```ini
-[Unit]
-Description=S-UI Traffic Sync Service
-After=network.target
-
-[Service]
-Type=simple
-User=root
-WorkingDirectory=/opt/sui-sync
-Environment=PYTHONPATH=/opt/sui-sync
-ExecStart=/opt/sui-sync/venv/bin/python /opt/sui-sync/sync_usage.py
-Restart=always
-RestartSec=10
-
-[Install]
-WantedBy=multi-user.target
-```
-
-3. سرویس‌ها را فعال و اجرا کنید:
+3. برای اطمینان از ثبت کرون‌جاب‌ها:
 ```bash
-sudo systemctl daemon-reload
-sudo systemctl enable sui-sync
-sudo systemctl enable sui-sync-usage
-sudo systemctl start sui-sync
-sudo systemctl start sui-sync-usage
+sudo crontab -l
 ```
 
-## بررسی وضعیت سرویس‌ها
+مطمئن شوید که مسیرها در کرون‌تب با محل نصب اسکریپت‌های شما مطابقت دارد.
 
-برای بررسی وضعیت سرویس‌ها:
+## بررسی وضعیت اجرا
+
+برای بررسی لاگ کرون‌جاب‌ها:
 ```bash
-sudo systemctl status sui-sync
-sudo systemctl status sui-sync-usage
+sudo tail -f /var/log/syslog | grep CRON
 ```
 
-برای مشاهده لاگ‌ها:
+برای بررسی لاگ‌های اسکریپت‌ها:
 ```bash
-sudo journalctl -u sui-sync -f
-sudo journalctl -u sui-sync-usage -f
+tail -f /opt/sui-sync/traffic_sync.log
+```
+
+برای بررسی وضعیت کرون‌جاب‌های فعال:
+```bash
+sudo crontab -l
 ```
 
 ## عملکرد

@@ -119,31 +119,29 @@ class TrafficSync:
 def main():
     syncer = TrafficSync()
     
-    while True:
-        try:
-            syncer.sync_traffic()
-        except Exception as e:
-            logging.error(f"Critical error in sync process: {e}")
+    try:
+        syncer.sync_traffic()
+    except Exception as e:
+        logging.error(f"Critical error in sync process: {e}")
+    
+    logging.info("Waiting for next sync cycle...")
+    try:
+        print("Restarting s-ui service...")
+        subprocess.run(['systemctl', 'restart', 's-ui'], check=True)
+        time.sleep(2)  # Wait for 2 seconds
         
-        logging.info("Waiting for next sync cycle...")
-        try:
-            print("Restarting s-ui service...")
-            subprocess.run(['systemctl', 'restart', 's-ui'], check=True)
-            time.sleep(2)  # Wait for 2 seconds
-            
-            # Check if service is running
-            status = subprocess.run(['systemctl', 'is-active', 's-ui'], 
-                                capture_output=True, 
-                                text=True)
-            
-            if status.stdout.strip() == 'active':
-                print("s-ui service restarted successfully")
-            else:
-                print("Warning: s-ui service might not have restarted properly")
-            
-        except subprocess.CalledProcessError as e:
-             print(f"Error restarting s-ui service: {e}")
-        time.sleep(300)  # 5 minutes
+        # Check if service is running
+        status = subprocess.run(['systemctl', 'is-active', 's-ui'], 
+                            capture_output=True, 
+                            text=True)
+        
+        if status.stdout.strip() == 'active':
+            print("s-ui service restarted successfully")
+        else:
+            print("Warning: s-ui service might not have restarted properly")
+        
+    except subprocess.CalledProcessError as e:
+            print(f"Error restarting s-ui service: {e}")
 
 if __name__ == "__main__":
     main()
