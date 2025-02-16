@@ -8,6 +8,7 @@
         "database": ""
       }
     },
+    "obfs_password" : "",
     "sync": {
       "interval": 300,
       "restart_sui": true

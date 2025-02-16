@@ -20,6 +20,7 @@ class UserSync:
         self.sui_db_path = SUI_DB_PATH
         self.server_ip = SERVER_IP
         self.db_config = DB_CONFIG
+        self.obfs_password = OBFS_PASSWORD
 
     def _connect_xmplus(self) -> mysql.connector.MySQLConnection:
         return mysql.connector.connect(**self.db_config)
@@ -64,7 +65,7 @@ class UserSync:
         return [{
             "remark": f"hysteria2-{port}",
             "type": "local",
-            "uri": f"hysteria2://{token}@{self.server_ip}:{port}?fastopen=0&obfs=salamander&obfs-password=2bxq67sohw9k1av83vk8f7h2it6v95b63xyitu2f0n50yxbq#{username}"
+            "uri": f"hysteria2://{token}@{self.server_ip}:{port}?fastopen=0&obfs=salamander&obfs-password={self.obfs_password}#{username}"
         }]
 
     def _add_user(self, username: str, token: str) -> bool:
