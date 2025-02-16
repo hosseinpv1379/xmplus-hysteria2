@@ -1,6 +1,5 @@
 {
     "database": {
-      "sui_db_path": "/usr/local/s-ui/db/s-ui.db",
       "xmplus": {
         "host": "",
         "user": "",
@@ -12,5 +11,8 @@
     "sync": {
       "interval": 300,
       "restart_sui": true
-    }
+    },
+    "sui_db_path" : "/usr/local/s-ui/db/s-ui.db" , 
+    "server_ip" : ""
+
   }
