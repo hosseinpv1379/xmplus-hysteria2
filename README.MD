@@ -1,189 +1,178 @@
-# VPN Service Installation Guide
+# XMPlus Hysteria2 Sync
 
-## Prerequisites
-- Ubuntu 20.04 or higher
-- Root access
-- Domain pointed to your server
-- S-UI and XMPlus panels already installed
+این پروژه یک سیستم همگام‌سازی بین XMPlus و S-UI است که امکان مدیریت خودکار کاربران و ترافیک را فراهم می‌کند.
 
-## Quick Installation
+## پیش‌نیازها
 
+- Python 3.8 یا بالاتر
+- S-UI نصب شده
+- دسترسی به دیتابیس XMPlus
+- سیستم عامل لینوکس (ترجیحاً Ubuntu/Debian)
+
+## نصب
+
+1. ابتدا مخزن را کلون کنید:
 ```bash
 git clone https://github.com/hosseinpv1379/xmplus-hysteria2.git
-
 cd xmplus-hysteria2
-sudo bash install.sh
 ```
 
-2. Edit `config.json`:
+2. محیط مجازی Python را ایجاد و فعال کنید:
+```bash
+python3 -m venv venv
+source venv/bin/activate
+```
+
+3. وابستگی‌های پروژه را نصب کنید:
+```bash
+pip install -r requirements.txt
+```
+
+4. دایرکتوری پروژه را به مسیر مناسب منتقل کنید:
+```bash
+sudo mkdir -p /opt/sui-sync
+sudo cp -r * /opt/sui-sync/
+```
+
+## پیکربندی
+
+1. فایل پیکربندی را ویرایش کنید:
+```bash
+sudo nano /opt/sui-sync/config.json
+```
+
+2. اطلاعات زیر را در فایل `config.json` وارد کنید:
 ```json
 {
-  "database": {
-    "sui_db_path": "/usr/local/s-ui/db/s-ui.db",
-    "xmplus": {
-      "host": "your_db_host",
-      "user": "your_db_user",
-      "password": "your_db_password",
-      "database": "your_db_name"
+    "database": {
+        "sui_db_path": "/usr/local/s-ui/db/s-ui.db",
+        "xmplus": {
+            "host": "آدرس_دیتابیس_XMPlus",
+            "user": "نام_کاربری_دیتابیس",
+            "password": "رمز_عبور_دیتابیس",
+            "database": "نام_دیتابیس_XMPlus"
+        }
+    },
+    "sync": {
+        "interval": 300,
+        "restart_sui": true
     }
-  },
-  "sync": {
-    "interval": 300,
-    "restart_sui": true
-  },
-  "subscription": {
-    "servers": [
-      {
-        "name": "Server 1",
-        "ip": "your_server_ip",
-        "port": 443,
-        "obfs": "salamander",
-        "obfs_password": "your_obfs_password"
-      }
-    ]
-  }
 }
 ```
 
-3. Run the installation script:
+## راه‌اندازی سرویس‌ها
+
+1. برای همگام‌سازی کاربران، سرویس زیر را ایجاد کنید:
 ```bash
-sudo bash install.sh
+sudo nano /etc/systemd/system/sui-sync.service
 ```
 
-4. During installation, you'll be prompted for:
-   - Domain name
-   - Database credentials
-   - Server configurations
-   - Service names
+محتوای فایل سرویس:
+```ini
+[Unit]
+Description=S-UI User Sync Service
+After=network.target
 
-## Service Management
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/sui-sync
+Environment=PYTHONPATH=/opt/sui-sync
+ExecStart=/opt/sui-sync/venv/bin/python /opt/sui-sync/main.py
+Restart=always
+RestartSec=10
 
-Check services status:
+[Install]
+WantedBy=multi-user.target
+```
+
+2. برای همگام‌سازی ترافیک، سرویس دیگری ایجاد کنید:
 ```bash
-sudo systemctl status sync-users
-sudo systemctl status sync-usage
-sudo systemctl status subscription
+sudo nano /etc/systemd/system/sui-sync-usage.service
 ```
 
-View logs:
+محتوای فایل سرویس:
+```ini
+[Unit]
+Description=S-UI Traffic Sync Service
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/sui-sync
+Environment=PYTHONPATH=/opt/sui-sync
+ExecStart=/opt/sui-sync/venv/bin/python /opt/sui-sync/sync_usage.py
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+```
+
+3. سرویس‌ها را فعال و اجرا کنید:
 ```bash
-sudo journalctl -u sync-users -f
-sudo journalctl -u sync-usage -f
-sudo journalctl -u subscription -f
+sudo systemctl daemon-reload
+sudo systemctl enable sui-sync
+sudo systemctl enable sui-sync-usage
+sudo systemctl start sui-sync
+sudo systemctl start sui-sync-usage
 ```
 
-Restart services:
+## بررسی وضعیت سرویس‌ها
+
+برای بررسی وضعیت سرویس‌ها:
 ```bash
-sudo systemctl restart sync-users
-sudo systemctl restart sync-usage
-sudo systemctl restart subscription
+sudo systemctl status sui-sync
+sudo systemctl status sui-sync-usage
 ```
 
-## Troubleshooting
-
-### Database Access Error
-If you encounter database access issues:
+برای مشاهده لاگ‌ها:
 ```bash
-sudo chmod 777 /usr/local/s-ui/db/s-ui.db
-sudo chown -R root:root /usr/local/s-ui/db/
+sudo journalctl -u sui-sync -f
+sudo journalctl -u sui-sync-usage -f
 ```
 
-### Port Access Issues
-Check if ports 80/443 are in use:
+## عملکرد
+
+- `main.py`: این اسکریپت کاربران فعال را از XMPlus دریافت کرده و آنها را در S-UI همگام‌سازی می‌کند.
+- `sync_usage.py`: این اسکریپت ترافیک مصرفی کاربران را از S-UI به XMPlus منتقل می‌کند.
+
+## نکات مهم
+
+1. اطمینان حاصل کنید که مسیر دیتابیس S-UI در `config.json` صحیح است.
+2. دسترسی‌های لازم برای دیتابیس XMPlus را در `config.json` به درستی تنظیم کنید.
+3. سرویس‌ها به صورت خودکار پس از راه‌اندازی سیستم اجرا می‌شوند.
+4. در صورت تغییر در کد، سرویس‌ها را مجدداً راه‌اندازی کنید.
+
+## عیب‌یابی
+
+اگر سرویس‌ها به درستی کار نمی‌کنند:
+
+1. لاگ‌ها را بررسی کنید:
 ```bash
-sudo lsof -i :80
-sudo lsof -i :443
+tail -f /opt/sui-sync/traffic_sync.log
 ```
 
-### SSL Certificate Issues
-Manually renew SSL certificate:
+2. دسترسی‌های فایل‌ها را چک کنید:
 ```bash
-sudo certbot --nginx -d yourdomain.com
+sudo chown -R root:root /opt/sui-sync
+sudo chmod -R 755 /opt/sui-sync
 ```
 
-### Nginx Configuration
-Check Nginx configuration:
+3. اتصال به دیتابیس‌ها را بررسی کنید:
 ```bash
-sudo nginx -t
-sudo systemctl restart nginx
+# بررسی دسترسی به دیتابیس S-UI
+ls -l /usr/local/s-ui/db/s-ui.db
+
+# تست اتصال به دیتابیس XMPlus
+mysql -h HOST -u USER -p DATABASE
 ```
 
-## API Endpoints
+## مشارکت
 
-### Subscription Link
-```
-https://yourdomain.com/link/<token>?client=<client_name>
-```
+پول ریکوئست‌ها و گزارش مشکلات از طریق GitHub پذیرفته می‌شود.
 
-Example:
-```
-https://yourdomain.com/link/abc123?client=client1
-```
+## لایسنس
 
-## Security Recommendations
-
-1. Configure firewall:
-```bash
-sudo ufw allow 80/tcp
-sudo ufw allow 443/tcp
-sudo ufw enable
-```
-
-2. Secure database access:
-```bash
-sudo chmod 640 /usr/local/s-ui/db/s-ui.db
-```
-
-3. Regular updates:
-```bash
-sudo apt update
-sudo apt upgrade
-```
-
-## Updating the Service
-
-1. Stop services:
-```bash
-sudo systemctl stop sync-users sync-usage subscription
-```
-
-2. Update files:
-```bash
-cd /opt/sui-sync
-git pull origin main
-```
-
-3. Restart services:
-```bash
-sudo systemctl restart sync-users sync-usage subscription
-```
-
-## Backup and Recovery
-
-1. Backup configuration:
-```bash
-sudo cp /opt/sui-sync/config.json /opt/sui-sync/config.backup.json
-```
-
-2. Backup database:
-```bash
-sudo cp /usr/local/s-ui/db/s-ui.db /usr/local/s-ui/db/s-ui.backup.db
-```
-
-## Support
-
-For issues and feature requests, please create an issue on GitHub repository.
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch
-3. Commit your changes
-4. Push to the branch
-5. Create a new Pull Request
-
-This comprehensive guide should help users install and maintain the service effectively. Let me know if you need any clarification or additional sections!
+این پروژه تحت لایسنس MIT منتشر شده است.

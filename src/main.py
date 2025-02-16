@@ -30,7 +30,7 @@ class UserSync:
     def _get_active_users(self) -> List[Dict]:
         with self._connect_xmplus() as conn:
             cursor = conn.cursor(dictionary=True)
-            cursor.execute("SELECT count(*) FROM service WHERE status = 1 AND traffic - total_used > 10000")
+            cursor.execute("SELECT uuio FROM service WHERE status = 1 AND traffic - total_used > 10000")
             return cursor.fetchall()
 
     def _user_exists(self, username: str) -> bool:
