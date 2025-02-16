@@ -1,0 +1,45 @@
+{
+    "database": {
+      "sui_db_path": "/usr/local/s-ui/db/s-ui.db",
+      "xmplus": {
+        "host": "",
+        "user": "",
+        "password": "",
+        "database": ""
+      }
+    },
+    "sync": {
+      "interval": 300,
+      "restart_sui": true
+    },
+    "subscription": {
+      "servers": [
+        {
+          "name": "Server 1",
+          "ip": "",
+          "port": 443,
+          "obfs": "salamander",
+          "obfs_password": "your_second_password"
+        },
+        {
+          "name": "Server 2",
+          "ip": "",
+          "port": 443,
+          "obfs": "salamander",
+          "obfs_password": "your_second_password"
+        }
+      ],
+      "subscription_names": {
+        "client1": "Service Provider 1",
+        "client2": "Service Provider 2",
+        "client3": "Service Provider 3"
+      },
+      "api": {
+        "base_url": "",
+        "endpoint": "/link"
+      },
+      "default_vmess": "YOUR_BASE64_VMESS_CONFIG",
+      "port": 5000,
+      "domain": "your_domain.com"
+    }
+  }

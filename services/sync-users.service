@@ -1,0 +1,12 @@
+[Unit]
+Description=S-UI User Sync Service
+After=network.target
+
+[Service]
+ExecStart=/usr/bin/python3 /opt/sui-sync/main.py
+Restart=always
+User=root
+WorkingDirectory=/opt/sui-sync
+
+[Install]
+WantedBy=multi-user.target
