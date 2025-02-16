@@ -11,7 +11,7 @@ with open('/opt/sui-sync/config.json', 'r') as f:
     config = json.load(f)
 
 SUI_DB_PATH = config['sui_db_path']
-DB_CONFIG = config['xmplus_db']
+DB_CONFIG = config['database']['xmplus']
 SERVER_IP = config['server_ip']
 OBFS_PASSWORD = config['obfs_password']
 
