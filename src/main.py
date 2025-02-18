@@ -62,7 +62,7 @@ class UserSyncAPI:
             "enable": True,
             "name": username,
             "config": config,
-            "inbounds": [3, 4, 5],
+            "inbounds": ["hysteria2-22166"],
             "links": links,
             "volume": 0,
             "expiry": 0,
