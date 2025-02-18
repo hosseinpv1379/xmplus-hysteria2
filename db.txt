@@ -1,0 +1,6 @@
+{
+        "host": "91.107.241.44",
+        "user": "Hossein5213",
+        "password": "raThILdHOROuCkYActOGMEMONAG",
+        "database": "sql_panel_bugde1"
+    },

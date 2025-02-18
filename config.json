@@ -12,7 +12,8 @@
       "interval": 300,
       "restart_sui": true
     },
-    "sui_db_path" : "/usr/local/s-ui/db/s-ui.db" , 
-    "server_ip" : ""
+    "sui_db_path" : "/usr/local/s-ui/db/s-ui.db" ,
+    "server_ip" : "",
+    "api_token" : ""
 
   }

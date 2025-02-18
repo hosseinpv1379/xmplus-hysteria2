@@ -7,13 +7,15 @@ import requests
 from typing import Dict, List, Optional
 
 class UserSyncAPI:
-    def __init__(self, config_path: str = '/opt/sui-sync/config.json'):
+    def __init__(self, config_path: str = '/root/xmplus-hysteria2/config.json'):
         with open(config_path, 'r') as f:
             config = json.load(f)
 
         self.db_config = config['database']['xmplus']
         self.server_ip = config['server_ip']
-        self.api_url = "http://localhost:2095/app/apiv2/save"
+        self.api_base_url = "http://localhost:2095/app/apiv2"
+        self.api_save_url = f"{self.api_base_url}/save"
+        self.api_clients_url = f"{self.api_base_url}/clients"
         self.api_token = config['api_token']
         self.obfs_password = config['obfs_password']
 
@@ -49,6 +51,10 @@ class UserSyncAPI:
         }]
 
     def _add_user(self, username: str, token: str) -> bool:
+        if self._user_exists(username):
+            print(f"User {username} already exists")
+            return False
+
         config = self._generate_config(username, token)
         links = self._generate_hy2_link(username, token)
 
@@ -106,18 +112,23 @@ class UserSyncAPI:
             return False
 
     def _get_current_users(self) -> List[str]:
-        url = "http://localhost:2095/app/apiv2/list"
         headers = {'Token': self.api_token}
-        files = {'object': (None, 'clients')}
 
         try:
-            response = requests.post(url, headers=headers, files=files)
+            response = requests.get(self.api_clients_url, headers=headers)
             response.raise_for_status()
-            clients = response.json().get('obj', [])
-            return [client['name'] for client in clients]
+            data = response.json()
+            if data.get('success'):
+                clients = data.get('obj', {}).get('clients', [])
+                return [client['name'] for client in clients]
+            return []
         except Exception as e:
             print(f"Error getting current users: {e}")
             return []
+
+    def _user_exists(self, username: str) -> bool:
+        current_users = self._get_current_users()
+        return username in current_users
 
     def sync_users(self) -> tuple[int, int]:
         try:
