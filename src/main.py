@@ -116,14 +116,29 @@ class UserSyncAPI:
 
         try:
             response = requests.get(self.api_clients_url, headers=headers)
+            print(f"API Response: {response.text}") # برای دیباگ
             response.raise_for_status()
             data = response.json()
-            if data.get('success'):
-                clients = data.get('obj', {}).get('clients', [])
-                return [client['name'] for client in clients]
+
+            if not data.get('success'):
+                print(f"API returned error: {data.get('msg')}")
+                return []
+
+            clients = data.get('obj', {})
+            if not clients or 'clients' not in clients:
+                print("No clients data in response")
+                return []
+
+            return [client.get('name', '') for client in clients['clients'] if client.get('name')]
+
+        except requests.exceptions.RequestException as e:
+            print(f"HTTP Error: {e}")
+            return []
+        except json.JSONDecodeError as e:
+            print(f"JSON Parse Error: {e}")
             return []
         except Exception as e:
-            print(f"Error getting current users: {e}")
+            print(f"Unexpected Error: {e}")
             return []
 
     def _user_exists(self, username: str) -> bool:
