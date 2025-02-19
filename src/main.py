@@ -4,6 +4,7 @@ import uuid
 import base64
 import secrets
 import requests
+import traceback
 from typing import Dict, List, Optional
 
 class UserSyncAPI:
@@ -62,7 +63,7 @@ class UserSyncAPI:
             "enable": True,
             "name": username,
             "config": config,
-            "inbounds": ["hysteria2-22166"],
+            "inbounds": [1],  # اعداد باید به صورت عددی باشند
             "links": links,
             "volume": 0,
             "expiry": 0,
@@ -79,19 +80,59 @@ class UserSyncAPI:
         files = {
             'object': (None, 'clients'),
             'action': (None, 'new'),
-            'data': (None, json.dumps(data))
+            'data': (None, json.dumps([{  # تبدیل به لیست با یک آبجکت
+                "enable": True,
+                "name": username,
+                "config": config,
+                "inbounds": [1],
+                "links": links,
+                "volume": 0,
+                "expiry": 0,
+                "up": 0,
+                "down": 0,
+                "desc": "",
+                "group": ""
+            }]))
         }
 
         try:
-            response = requests.post(self.api_url, headers=headers, files=files)
+            headers = {
+                'Token': self.api_token
+            }
+
+            files = {
+                'object': (None, 'clients'),
+                'action': (None, 'new'),
+                'data': (None, json.dumps(data))
+            }
+
+            response = requests.post(self.api_save_url, headers=headers, files=files)
             response.raise_for_status()
-            print(f"User {username} added successfully via API")
-            return True
+            result = response.json()
+
+            if result.get('success'):
+                print(f"User {username} added successfully via API")
+                return True
+            else:
+                print(f"Failed to add user {username}: {result.get('msg')}")
+                return False
         except Exception as e:
             print(f"Error adding user {username}: {e}")
             return False
 
+    def _get_user_id(self, username: str) -> Optional[int]:
+        current_users = self._get_current_users()
+        for user in current_users:
+            if user['name'] == username:
+                return user['id']
+        return None
+
     def _remove_user(self, username: str) -> bool:
+        user_id = self._get_user_id(username)
+        if user_id is None:
+            print(f"User {username} not found")
+            return False
+
         headers = {
             'Token': self.api_token
         }
@@ -99,37 +140,59 @@ class UserSyncAPI:
         files = {
             'object': (None, 'clients'),
             'action': (None, 'del'),
-            'data': (None, json.dumps({"name": username}))
+            'data': (None, str(user_id))  # فقط ID به صورت عددی
         }
 
         try:
-            response = requests.post(self.api_url, headers=headers, files=files)
+            response = requests.post(self.api_save_url, headers=headers, files=files)
             response.raise_for_status()
-            print(f"User {username} removed successfully via API")
-            return True
+            result = response.json()
+
+            if result.get('success'):
+                print(f"User {username} removed successfully via API")
+                return True
+            else:
+                print(f"Failed to remove user {username}: {result.get('msg')}")
+                return False
         except Exception as e:
             print(f"Error removing user {username}: {e}")
             return False
 
-    def _get_current_users(self) -> List[str]:
+        try:
+            response = requests.post(self.api_save_url, headers=headers, files=files)
+            response.raise_for_status()
+            result = response.json()
+
+            if result.get('success'):
+                print(f"User {username} removed successfully via API")
+                return True
+            else:
+                print(f"Failed to remove user {username}: {result.get('msg')}")
+                return False
+        except Exception as e:
+            print(f"Error removing user {username}: {e}")
+            return False
+
+    def _get_current_users(self) -> List[Dict]:
         headers = {'Token': self.api_token}
 
         try:
             response = requests.get(self.api_clients_url, headers=headers)
-            print(f"API Response: {response.text}") # برای دیباگ
             response.raise_for_status()
             data = response.json()
+
+            print(f"API Response: {data}")
 
             if not data.get('success'):
                 print(f"API returned error: {data.get('msg')}")
                 return []
 
-            clients = data.get('obj', {})
-            if not clients or 'clients' not in clients:
-                print("No clients data in response")
+            clients = data.get('obj', {}).get('clients')
+            if clients is None:
+                print("No clients found in s-ui")
                 return []
 
-            return [client.get('name', '') for client in clients['clients'] if client.get('name')]
+            return clients
 
         except requests.exceptions.RequestException as e:
             print(f"HTTP Error: {e}")
@@ -139,42 +202,124 @@ class UserSyncAPI:
             return []
         except Exception as e:
             print(f"Unexpected Error: {e}")
+            traceback.print_exc()
             return []
-
-    def _user_exists(self, username: str) -> bool:
-        current_users = self._get_current_users()
-        return username in current_users
 
     def sync_users(self) -> tuple[int, int]:
         try:
-            # Get active tokens from xmplus
+            print("Getting active UUIDs from xmplus...")
             with self._connect_xmplus() as conn:
                 cursor = conn.cursor(dictionary=True)
                 cursor.execute("SELECT uuid FROM service WHERE status = 1 AND traffic - total_used > 10000")
-                active_tokens = {user['uuid'] for user in cursor.fetchall()}
+                active_uuids = {user['uuid'] for user in cursor.fetchall()}
+            print(f"Found {len(active_uuids)} active UUIDs in xmplus")
 
-            # Get current users from API
-            current_users = set(self._get_current_users())
+            print("Getting current users from s-ui...")
+            current_users = self._get_current_users()
+            current_uuids = set()
 
-            # Find users to remove
-            users_to_remove = current_users - active_tokens
+            # اضافه کردن تمام uuid های موجود در s-ui
+            if current_users:
+                for user in current_users:
+                    try:
+                        if user and isinstance(user, dict) and 'name' in user:
+                            current_uuids.add(user['name'])
+                    except Exception as e:
+                        print(f"Error processing user {user}: {e}")
+                        continue
+
+            print(f"Found {len(current_uuids)} users in s-ui")
+
+            # کاربرانی که باید حذف شوند
+            to_remove = current_uuids - active_uuids
+            print(f"Found {len(to_remove)} users to remove")
+
+            # کاربرانی که باید اضافه شوند
+            to_add = active_uuids - current_uuids
+            print(f"Found {len(to_add)} users to add")
+
+            # حذف کاربران غیر فعال
             removed_count = 0
-            for username in users_to_remove:
-                if self._remove_user(username):
-                    removed_count += 1
+            for uuid in to_remove:
+                try:
+                    print(f"Removing user {uuid}...")
+                    if self._remove_user(uuid):
+                        removed_count += 1
+                    else:
+                        print(f"Failed to remove user {uuid}")
+                except Exception as e:
+                    print(f"Error removing user {uuid}: {e}")
+                    continue
 
-            # Add new users
-            users_to_add = active_tokens - current_users
+            # اضافه کردن کاربران جدید
             added_count = 0
-            for token in users_to_add:
-                if self._add_user(token, token):
-                    added_count += 1
+            for uuid in to_add:
+                try:
+                    print(f"Adding user {uuid}...")
+                    if self._add_user(uuid, uuid):
+                        added_count += 1
+                    else:
+                        print(f"Failed to add user {uuid}")
+                except Exception as e:
+                    print(f"Error adding user {uuid}: {e}")
+                    continue
 
-            print(f"Added {added_count} new users, removed {removed_count} invalid users")
+            print(f"Sync completed: Added {added_count} users, Removed {removed_count} users")
             return added_count, removed_count
 
         except Exception as e:
             print(f"Error in sync_users: {e}")
+            traceback.print_exc()
+            return 0, 0
+
+    def _user_exists(self, username: str) -> bool:
+        current_users = self._get_current_users()
+        return any(user['name'] == username for user in current_users)
+
+    def sync_users(self) -> tuple[int, int]:
+        try:
+            print("Getting active UUIDs from xmplus...")
+            # فقط uuid های اکتیو و با ترافیک باقیمانده
+            with self._connect_xmplus() as conn:
+                cursor = conn.cursor(dictionary=True)
+                cursor.execute("SELECT uuid FROM service WHERE status = 1 AND traffic - total_used > 10000")
+                active_uuids = {user['uuid'] for user in cursor.fetchall()}
+            print(f"Found {len(active_uuids)} active UUIDs in xmplus")
+
+            print("Getting current users from s-ui...")
+            # تمام کاربران موجود در s-ui
+            current_users = self._get_current_users()
+            current_uuids = {user['name'] for user in current_users}
+            print(f"Found {len(current_uuids)} users in s-ui")
+
+            # کاربرانی که باید حذف شوند
+            to_remove = current_uuids - active_uuids
+            print(f"Found {len(to_remove)} users to remove")
+
+            # کاربرانی که باید اضافه شوند
+            to_add = active_uuids - current_uuids
+            print(f"Found {len(to_add)} users to add")
+
+            # حذف کاربران غیر فعال
+            removed_count = 0
+            for uuid in to_remove:
+                print(f"Removing user {uuid}...")
+                if self._remove_user(uuid):
+                    removed_count += 1
+
+            # اضافه کردن کاربران جدید
+            added_count = 0
+            for uuid in to_add:
+                print(f"Adding user {uuid}...")
+                if self._add_user(uuid, uuid):
+                    added_count += 1
+
+            print(f"Sync completed: Added {added_count} users, Removed {removed_count} users")
+            return added_count, removed_count
+
+        except Exception as e:
+            print(f"Error in sync_users: {e}")
+            traceback.print_exc()
             return 0, 0
 
 def main():
