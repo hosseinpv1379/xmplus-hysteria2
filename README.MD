@@ -28,36 +28,34 @@ source venv/bin/activate
 pip install -r requirements.txt
 ```
 
-4. دایرکتوری پروژه را به مسیر مناسب منتقل کنید:
-```bash
-sudo mkdir -p /opt/sui-sync
-sudo cp -r * /opt/sui-sync/
-```
-
 ## پیکربندی
 
 1. فایل پیکربندی را ویرایش کنید:
 ```bash
-sudo nano /opt/sui-sync/config.json
+sudo nano /root/xmplus-hysteria2/config.json
 ```
 
 2. اطلاعات زیر را در فایل `config.json` وارد کنید:
 ```json
 {
     "database": {
-        "sui_db_path": "/usr/local/s-ui/db/s-ui.db",
-        "xmplus": {
-            "host": "آدرس_دیتابیس_XMPlus",
-            "user": "نام_کاربری_دیتابیس",
-            "password": "رمز_عبور_دیتابیس",
-            "database": "نام_دیتابیس_XMPlus"
-        }
+      "xmplus": {
+        "host": "",
+        "user": "",
+        "password": "",
+        "database": ""
+      }
     },
+    "obfs_password" : "",
     "sync": {
-        "interval": 300,
-        "restart_sui": true
-    }
-}
+      "interval": 300,
+      "restart_sui": true
+    },
+    "sui_db_path" : "/usr/local/s-ui/db/s-ui.db" ,
+    "server_ip" : "",
+    "api_token" : ""
+
+  }
 ```
 
 ## راه‌اندازی با Crontab
@@ -71,11 +69,11 @@ sudo crontab -e
 
 2. خط‌های زیر را به کرون‌تب اضافه کنید:
 ```bash
-# همگام‌سازی کاربران هر 2 دقیقه
-*/2 * * * * /opt/sui-sync/venv/bin/python /opt/sui-sync/src/main.py
+# همگام‌سازی کاربران هر 1 دقیقه
+*/1 * * * * /root/xmplus-hysteria2/venv/bin/python /root/xmplus-hysteria2/src/main.py
 
-# همگام‌سازی ترافیک هر 2 دقیقه
-*/2 * * * * /opt/sui-sync/venv/bin/python /opt/sui-sync/src/sync_usage.py
+# همگام‌سازی ترافیک هر 4 ساعت
+0 */4 * * * /opt/sui-sync/venv/bin/python /root/xmplus-hysteria2/src/sync_usage.py >> /root/xmplus-hysteria2/sync.log 2>&1
 ```
 
 3. برای اطمینان از ثبت کرون‌جاب‌ها:
@@ -120,22 +118,7 @@ sudo crontab -l
 
 1. لاگ‌ها را بررسی کنید:
 ```bash
-tail -f /opt/sui-sync/traffic_sync.log
-```
-
-2. دسترسی‌های فایل‌ها را چک کنید:
-```bash
-sudo chown -R root:root /opt/sui-sync
-sudo chmod -R 755 /opt/sui-sync
-```
-
-3. اتصال به دیتابیس‌ها را بررسی کنید:
-```bash
-# بررسی دسترسی به دیتابیس S-UI
-ls -l /usr/local/s-ui/db/s-ui.db
-
-# تست اتصال به دیتابیس XMPlus
-mysql -h HOST -u USER -p DATABASE
+tail -f /root/xmplus-hysteria2/sync.log
 ```
 
 ## مشارکت
