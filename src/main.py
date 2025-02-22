@@ -181,8 +181,6 @@ class UserSyncAPI:
             response.raise_for_status()
             data = response.json()
 
-            print(f"API Response: {data}")
-
             if not data.get('success'):
                 print(f"API returned error: {data.get('msg')}")
                 return []
@@ -210,7 +208,7 @@ class UserSyncAPI:
             print("Getting active UUIDs from xmplus...")
             with self._connect_xmplus() as conn:
                 cursor = conn.cursor(dictionary=True)
-                cursor.execute("SELECT uuid FROM service WHERE status = 1 AND traffic - total_used > 10000")
+                cursor.execute("SELECT uuid FROM service WHERE status = 1 AND traffic - total_used > 10000 LIMIT 500")
                 active_uuids = {user['uuid'] for user in cursor.fetchall()}
             print(f"Found {len(active_uuids)} active UUIDs in xmplus")
 
