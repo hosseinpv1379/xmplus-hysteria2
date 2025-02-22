@@ -38,7 +38,7 @@ class TrafficSync:
 
         try:
             response = requests.get(url, headers=headers)
-            logging.debug(f"Get clients response: {response.text}")
+            #logging.debug(f"Get clients response: {response.text}")
             response.raise_for_status()
             data = response.json()
 
