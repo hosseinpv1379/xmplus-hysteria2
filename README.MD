@@ -69,11 +69,10 @@ sudo crontab -e
 
 2. خط‌های زیر را به کرون‌تب اضافه کنید:
 ```bash
-# همگام‌سازی کاربران هر 1 دقیقه
-*/1 * * * * /root/xmplus-hysteria2/venv/bin/python /root/xmplus-hysteria2/src/main.py
 
+0 0 * * * /root/xmplus-hysteria2/venv/bin/python /root/xmplus-hysteria2/src/main.py
 # همگام‌سازی ترافیک هر 4 ساعت
-0 */4 * * * /opt/sui-sync/venv/bin/python /root/xmplus-hysteria2/src/sync_usage.py >> /root/xmplus-hysteria2/sync.log 2>&1
+55 23 * * * /opt/sui-sync/venv/bin/python /root/xmplus-hysteria2/src/sync_usage.py >> /root/xmplus-hysteria2/sync.log 2>&1
 ```
 
 3. برای اطمینان از ثبت کرون‌جاب‌ها:
