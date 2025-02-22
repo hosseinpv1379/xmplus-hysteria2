@@ -193,13 +193,18 @@ class TrafficSync:
 
             cursor = conn.cursor()
             try:
+    # تبدیل مقادیر به اینتیجر با استفاده از تابع int()
+                up_value = int(up / 0.8)
+                down_value = int(down / 0.8)
+                total_value = up_value + down_value
+
                 cursor.execute("""
                     UPDATE service
                     SET u = u + %s,
                         d = d + %s,
                         total_used = total_used + %s
                     WHERE uuid = %s
-                """, (up, down, up + down, token))
+                """, (up_value, down_value, total_value, token))
 
                 conn.commit()
                 return cursor.rowcount > 0
