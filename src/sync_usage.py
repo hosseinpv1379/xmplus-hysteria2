@@ -167,11 +167,11 @@ class TrafficSync:
             'data': (None, json.dumps(reset_data))
         }
 
-        logging.debug(f"Reset traffic request data: {json.dumps(reset_data)}")
+        #logging.debug(f"Reset traffic request data: {json.dumps(reset_data)}")
 
         try:
             response = requests.post(url, headers=headers, files=files)
-            logging.debug(f"Reset traffic response: {response.text}")
+            #logging.debug(f"Reset traffic response: {response.text}")
             response.raise_for_status()
             result = response.json()
 
