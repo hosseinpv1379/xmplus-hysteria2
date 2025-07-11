@@ -208,7 +208,7 @@ class UserSyncAPI:
             print("Getting active UUIDs from xmplus...")
             with self._connect_xmplus() as conn:
                 cursor = conn.cursor(dictionary=True)
-                cursor.execute("SELECT uuid FROM service WHERE status = 1 AND traffic - total_used > 10000 LIMIT 500")
+                cursor.execute("SELECT uuid FROM service WHERE status = 1 AND traffic - total_used > 200000000 LIMIT 500")
                 active_uuids = {user['uuid'] for user in cursor.fetchall()}
             print(f"Found {len(active_uuids)} active UUIDs in xmplus")
 
@@ -280,7 +280,7 @@ class UserSyncAPI:
             # فقط uuid های اکتیو و با ترافیک باقیمانده
             with self._connect_xmplus() as conn:
                 cursor = conn.cursor(dictionary=True)
-                cursor.execute("SELECT uuid FROM service WHERE status = 1 AND traffic - total_used > 10000")
+                cursor.execute("SELECT uuid FROM service WHERE status = 1 AND traffic - total_used > 200000000")
                 active_uuids = {user['uuid'] for user in cursor.fetchall()}
             print(f"Found {len(active_uuids)} active UUIDs in xmplus")
 
