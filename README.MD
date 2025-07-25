@@ -69,10 +69,7 @@ sudo crontab -e
 
 2. خط‌های زیر را به کرون‌تب اضافه کنید:
 ```bash
-
-0 0 * * * /root/xmplus-hysteria2/venv/bin/python /root/xmplus-hysteria2/src/main.py
-# همگام‌سازی ترافیک هر 4 ساعت
-55 23 * * * /opt/sui-sync/venv/bin/python /root/xmplus-hysteria2/src/sync_usage.py >> /root/xmplus-hysteria2/sync.log 2>&1
+0 */12 * * * /root/xmplus-hysteria2/venv/bin/python /root/xmplus-hysteria2/src/main-1.py
 ```
 
 3. برای اطمینان از ثبت کرون‌جاب‌ها:
