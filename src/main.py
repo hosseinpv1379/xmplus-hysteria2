@@ -130,7 +130,7 @@ class UserSyncAPI:
     def _remove_user(self, username: str) -> bool:
         user_id = self._get_user_id(username)
         if user_id is None:
-            print(f"User {username} not found")
+            #print(f"User {username} not found")
             return False
 
         headers = {
@@ -149,13 +149,13 @@ class UserSyncAPI:
             result = response.json()
 
             if result.get('success'):
-                print(f"User {username} removed successfully via API")
+                #print(f"User {username} removed successfully via API")
                 return True
             else:
-                print(f"Failed to remove user {username}: {result.get('msg')}")
+                #print(f"Failed to remove user {username}: {result.get('msg')}")
                 return False
         except Exception as e:
-            print(f"Error removing user {username}: {e}")
+            #print(f"Error removing user {username}: {e}")
             return False
 
         try:
@@ -182,37 +182,37 @@ class UserSyncAPI:
             data = response.json()
 
             if not data.get('success'):
-                print(f"API returned error: {data.get('msg')}")
+                #print(f"API returned error: {data.get('msg')}")
                 return []
 
             clients = data.get('obj', {}).get('clients')
             if clients is None:
-                print("No clients found in s-ui")
+                #print("No clients found in s-ui")
                 return []
 
             return clients
 
         except requests.exceptions.RequestException as e:
-            print(f"HTTP Error: {e}")
+            #print(f"HTTP Error: {e}")
             return []
         except json.JSONDecodeError as e:
-            print(f"JSON Parse Error: {e}")
+            #print(f"JSON Parse Error: {e}")
             return []
         except Exception as e:
-            print(f"Unexpected Error: {e}")
+            #print(f"Unexpected Error: {e}")
             traceback.print_exc()
             return []
 
     def sync_users(self) -> tuple[int, int]:
         try:
-            print("Getting active UUIDs from xmplus...")
+            #print("Getting active UUIDs from xmplus...")
             with self._connect_xmplus() as conn:
                 cursor = conn.cursor(dictionary=True)
                 cursor.execute("SELECT uuid FROM service WHERE status = 1 AND traffic - total_used > 200000000 LIMIT 500")
                 active_uuids = {user['uuid'] for user in cursor.fetchall()}
-            print(f"Found {len(active_uuids)} active UUIDs in xmplus")
+            #print(f"Found {len(active_uuids)} active UUIDs in xmplus")
 
-            print("Getting current users from s-ui...")
+            #print("Getting current users from s-ui...")
             current_users = self._get_current_users()
             current_uuids = set()
 
@@ -223,10 +223,10 @@ class UserSyncAPI:
                         if user and isinstance(user, dict) and 'name' in user:
                             current_uuids.add(user['name'])
                     except Exception as e:
-                        print(f"Error processing user {user}: {e}")
+                        #print(f"Error processing user {user}: {e}")
                         continue
 
-            print(f"Found {len(current_uuids)} users in s-ui")
+            #print(f"Found {len(current_uuids)} users in s-ui")
 
             # کاربرانی که باید حذف شوند
             to_remove = current_uuids - active_uuids
@@ -240,7 +240,7 @@ class UserSyncAPI:
             removed_count = 0
             for uuid in to_remove:
                 try:
-                    print(f"Removing user {uuid}...")
+                    #print(f"Removing user {uuid}...")
                     if self._remove_user(uuid):
                         removed_count += 1
                     else:
@@ -253,7 +253,7 @@ class UserSyncAPI:
             added_count = 0
             for uuid in to_add:
                 try:
-                    print(f"Adding user {uuid}...")
+                    #print(f"Adding user {uuid}...")
                     if self._add_user(uuid, uuid):
                         added_count += 1
                     else:
