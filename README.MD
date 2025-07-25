@@ -15,6 +15,7 @@
 ```bash
 git clone https://github.com/hosseinpv1379/xmplus-hysteria2.git
 cd xmplus-hysteria2
+apt install python3.12-venv
 ```
 
 2. محیط مجازی Python را ایجاد و فعال کنید:
