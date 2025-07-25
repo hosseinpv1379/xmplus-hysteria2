@@ -111,7 +111,7 @@ class UserSyncAPI:
             result = response.json()
 
             if result.get('success'):
-                print(f"User {username} added successfully via API")
+                #print(f"User {username} added successfully via API")
                 return True
             else:
                 print(f"Failed to add user {username}: {result.get('msg')}")
